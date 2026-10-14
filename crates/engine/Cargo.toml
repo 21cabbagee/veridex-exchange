@@ -1,0 +1,13 @@
+[package]
+name = "predix-engine"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+predix-core = { path = "../core" }
+predix-orderbook = { path = "../orderbook" }
+tokio = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+rust_decimal = { workspace = true }

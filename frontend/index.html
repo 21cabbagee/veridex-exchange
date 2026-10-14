@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VERIDEX — Next-Gen Event Derivatives Exchange</title>
+  <meta name="description" content="Institutional-grade prediction markets and binary event derivatives. Real-time Rust matching engine with instant settlement." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body>
+  <!-- ══════════════════════════════════════════════ TOP TICKER -->
+  <div class="top-ticker" id="top-ticker">
+    <div class="ticker-track">
+      <span class="ticker-item"><span class="ticker-tag">BTC $100k</span> <span class="t-val t-up">82¢ (+4.2%)</span></span>
+      <span class="ticker-item"><span class="ticker-tag">US ELECTION '24</span> <span class="t-val t-up">73¢ (+1.8%)</span></span>
+      <span class="ticker-item"><span class="ticker-tag">FED CUT DEC</span> <span class="t-val t-down">61¢ (-2.1%)</span></span>
+      <span class="ticker-item"><span class="ticker-tag">SUPER BOWL LIX</span> <span class="t-val t-down">32¢ (-0.5%)</span></span>
+      <span class="ticker-item"><span class="ticker-tag">RUST ENGINE TPS</span> <span class="t-val t-mono">148,200/s</span></span>
+      <span class="ticker-item"><span class="ticker-tag">MATCHING LATENCY</span> <span class="t-val t-up">420μs</span></span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ NAV -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="./" class="nav-logo">
+        <div class="logo-mark">
+          <span class="logo-symbol">⟐</span>
+        </div>
+        <div class="logo-brand">
+          <span class="logo-title">VERIDEX</span>
+          <span class="logo-badge">EXCHANGE</span>
+        </div>
+      </a>
+
+      <div class="nav-tabs">
+        <button class="nav-tab active" data-view="markets" id="tab-markets">
+          <span class="tab-icon">◈</span> Markets
+        </button>
+        <button class="nav-tab" data-view="portfolio" id="tab-portfolio">
+          <span class="tab-icon">◬</span> Portfolio
+        </button>
+        <button class="nav-tab" data-view="leaderboard" id="tab-leaderboard">
+          <span class="tab-icon">★</span> Leaderboard
+        </button>
+        <button class="nav-tab" data-view="activity" id="tab-activity">
+          <span class="tab-icon">⚡</span> Activity
+        </button>
+      </div>
+
+      <div class="nav-actions">
+        <div class="search-wrap">
+          <input class="search-input" id="search-input" type="text" placeholder="Search markets (Press /)..." autocomplete="off" />
+          <span class="search-icon">⌕</span>
+        </div>
+        <button class="btn-ghost" id="btn-login">Sign In</button>
+        <button class="btn-primary" id="btn-signup">Trade Now</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ══════════════════════════════════════════════ HERO STATS BAR -->
+  <div id="view-markets" class="view active">
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat-item">
+        <span class="stat-label">24h Volume</span>
+        <span class="stat-value" id="stat-volume">$17.0M</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Open Interest</span>
+        <span class="stat-value" id="stat-oi">$6.0M</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Active Contracts</span>
+        <span class="stat-value" id="stat-markets">5</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Verified Traders</span>
+        <span class="stat-value" id="stat-traders">245,409</span>
+      </div>
+      <div class="stat-item live-pulse">
+        <span class="ws-dot connected" id="ws-dot" title="Live Rust matching engine connected"></span>
+        <span class="stat-label" style="color: var(--yes);">ENGINE LIVE</span>
+      </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="filter-row" id="filter-row">
+      <button class="pill active" data-cat="">All Contracts</button>
+      <button class="pill" data-cat="politics">🗳 Politics &amp; Macro</button>
+      <button class="pill" data-cat="crypto">₿ Crypto Derivatives</button>
+      <button class="pill" data-cat="finance">📈 Rates &amp; Equities</button>
+      <button class="pill" data-cat="sports">⚽ Sports Contracts</button>
+      <button class="pill" data-cat="science">🔬 Science &amp; AI</button>
+    </div>
+
+    <div class="sort-row">
+      <div class="sort-left">
+        <span class="sort-label">Sort by</span>
+        <select class="sort-select" id="sort-select">
+          <option value="volume">Highest 24h Volume</option>
+          <option value="liquidity">Deepest Liquidity</option>
+          <option value="traders">Most Active Traders</option>
+          <option value="new">Newly Listed</option>
+        </select>
+      </div>
+      <div class="parity-indicator" title="Guaranteed parity on all binary outcomes">
+        <span class="parity-shield">✓</span> <span>Synthetic Parity: <strong>YES + NO = $1.00</strong></span>
+      </div>
+    </div>
+
+    <!-- Market Cards Grid -->
+    <div class="market-grid" id="market-grid">
+      <!-- injected by JS -->
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ MARKET DETAIL VIEW -->
+  <div id="view-detail" class="view">
+    <button class="back-btn" id="back-btn">
+      <span class="back-arrow">←</span> Return to All Markets
+    </button>
+    
+    <div class="detail-layout">
+      <!-- Left Column: Contract Header, Interactive Canvas Chart, Order Book Ladder -->
+      <div class="detail-left">
+        <div class="detail-header">
+          <div class="detail-top-row">
+            <span class="detail-category" id="detail-cat">POLITICS</span>
+            <span class="detail-contract-badge">CFTC BINARY INDEX</span>
+          </div>
+          <h1 class="detail-title" id="detail-title">Will Trump win the 2024 US Presidential Election?</h1>
+          <p class="detail-desc" id="detail-desc"></p>
+          <div class="detail-meta">
+            <span id="detail-vol">24h Vol: $4.25M</span>
+            <span id="detail-traders">Traders: 48,291</span>
+            <span id="detail-liquidity">Liquidity: $1.20M</span>
+            <span class="oracle-tag" id="detail-oracle">Oracle: VERIDEX Resolution Committee</span>
+          </div>
+        </div>
+
+        <!-- Interactive Real-time Probability Canvas -->
+        <div class="chart-wrap">
+          <div class="chart-header">
+            <div class="chart-title">Probability Probability Curve (Mark-to-Market)</div>
+            <div class="chart-current" id="chart-current-price">73% (73¢)</div>
+          </div>
+          <canvas id="price-chart" width="800" height="280"></canvas>
+          <div class="chart-footer">
+            <span class="tf-btn active">1H</span>
+            <span class="tf-btn">6H</span>
+            <span class="tf-btn">24H</span>
+            <span class="tf-btn">1W</span>
+            <span class="tf-btn">ALL</span>
+            <span class="chart-engine-tag">Engine: sub-400μs FIFO</span>
+          </div>
+        </div>
+
+        <!-- Dual YES/NO Order Book & Recent Tape -->
+        <div class="book-section">
+          <div class="book-tabs">
+            <button class="book-tab active" data-book="yes">YES Liquidity Ladder</button>
+            <button class="book-tab" data-book="no">NO Liquidity Ladder</button>
+          </div>
+          <div class="book-layout">
+            <div class="book-col">
+              <div class="book-header">
+                <span>PRICE (¢)</span>
+                <span>SHARES</span>
+                <span>DEPTH ($)</span>
+              </div>
+              <div class="book-asks" id="book-asks"></div>
+              <div class="book-spread" id="book-spread">SPREAD — %</div>
+              <div class="book-bids" id="book-bids"></div>
+            </div>
+            <div class="trades-col">
+              <div class="book-header">
+                <span>TIME</span>
+                <span>PRICE</span>
+                <span>SIZE</span>
+              </div>
+              <div class="trades-list" id="trades-list"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: High-Velocity Execution Ticket -->
+      <div class="detail-right">
+        <div class="trade-panel" id="trade-panel">
+          <div class="ticket-header">
+            <span class="ticket-title">ORDER TICKET</span>
+            <span class="ticket-bal">Avail: <strong>$10,000.00</strong></span>
+          </div>
+
+          <div class="trade-tabs">
+            <button class="trade-tab active" data-outcome="YES" id="ttab-yes">YES</button>
+            <button class="trade-tab" data-outcome="NO" id="ttab-no">NO</button>
+          </div>
+
+          <div class="trade-sides">
+            <button class="side-btn active" data-side="BUY" id="side-buy">Buy</button>
+            <button class="side-btn" data-side="SELL" id="side-sell">Sell</button>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Execution Strategy</label>
+            <select class="field-select" id="order-type-select">
+              <option value="LIMIT">Limit Order (Resting Maker)</option>
+              <option value="MARKET">Market Order (Aggressive Taker)</option>
+              <option value="FOK">Fill-or-Kill (Atomic)</option>
+              <option value="IOC">Immediate-or-Cancel</option>
+            </select>
+          </div>
+
+          <div class="field-group" id="price-field">
+            <div class="field-label-row">
+              <label class="field-label">Limit Price</label>
+              <span class="field-sub" id="prob-label">73¢ (73% Implied)</span>
+            </div>
+            <div class="price-input-wrap">
+              <button class="price-btn" id="price-dec">−</button>
+              <input class="field-input price-input" id="price-input" type="number" step="0.01" min="0.01" max="0.99" value="0.73" />
+              <button class="price-btn" id="price-inc">+</button>
+            </div>
+            <div class="prob-bar-wrap">
+              <div class="prob-bar-fill" id="prob-bar-fill" style="width:73%"></div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <div class="field-label-row">
+              <label class="field-label">Contracts / Shares</label>
+              <span class="field-sub">1 share = $1.00 settlement</span>
+            </div>
+            <input class="field-input" id="qty-input" type="number" min="1" step="1" value="100" />
+            <div class="quick-qty-row">
+              <button class="q-btn" onclick="document.getElementById('qty-input').value=50; window.app.updateCostSummary()">50</button>
+              <button class="q-btn" onclick="document.getElementById('qty-input').value=100; window.app.updateCostSummary()">100</button>
+              <button class="q-btn" onclick="document.getElementById('qty-input').value=500; window.app.updateCostSummary()">500</button>
+              <button class="q-btn" onclick="document.getElementById('qty-input').value=1000; window.app.updateCostSummary()">1000</button>
+            </div>
+          </div>
+
+          <div class="cost-summary" id="cost-summary">
+            <div class="cost-row"><span>Order Value</span><span id="cost-value">$73.00</span></div>
+            <div class="cost-row"><span>Settlement Payout</span><span id="payout-value">$100.00</span></div>
+            <div class="cost-row"><span>Expected Yield</span><span id="return-value" class="pnl-positive">+37.0%</span></div>
+          </div>
+
+          <button class="btn-trade" id="btn-trade">Buy YES @ 73¢</button>
+          
+          <div class="trade-notice">
+            Instant execution via VERIDEX Rust order book. Zero maker fee, 0.1% taker rebate.
+          </div>
+        </div>
+
+        <!-- Position Card -->
+        <div class="position-card" id="position-card">
+          <div class="pos-header">Active Contract Position</div>
+          <div class="pos-row"><span>Held Shares</span><span id="pos-shares">0</span></div>
+          <div class="pos-row"><span>Average Cost</span><span id="pos-avg">—</span></div>
+          <div class="pos-row"><span>Mark Value</span><span id="pos-value">—</span></div>
+          <div class="pos-row"><span>Unrealized P&amp;L</span><span id="pos-pnl" class="pnl-positive">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ PORTFOLIO VIEW -->
+  <div id="view-portfolio" class="view">
+    <div class="page-header">
+      <h2>Portfolio &amp; Clearing Account</h2>
+      <p class="page-subtitle">Real-time mark-to-market positions, margin collateral, and settlement history.</p>
+    </div>
+    
+    <div class="portfolio-summary">
+      <div class="port-card">
+        <div class="port-label">Net Asset Value</div>
+        <div class="port-val" id="port-total">$10,247.50</div>
+        <div class="port-sub">USD Stablecoin Collateral</div>
+      </div>
+      <div class="port-card">
+        <div class="port-label">Available Balance</div>
+        <div class="port-val" id="port-cash">$9,752.50</div>
+        <div class="port-sub">Unencumbered Capital</div>
+      </div>
+      <div class="port-card">
+        <div class="port-label">Cumulative Realized P&amp;L</div>
+        <div class="port-val pnl-positive" id="port-pnl">+$247.50</div>
+        <div class="port-sub">Win Rate: 78.4%</div>
+      </div>
+    </div>
+
+    <div class="positions-table-wrap">
+      <table class="positions-table" id="positions-table">
+        <thead>
+          <tr>
+            <th>Contract Title</th>
+            <th>Outcome</th>
+            <th>Shares</th>
+            <th>Entry Price</th>
+            <th>Mark Price</th>
+            <th>Unrealized P&amp;L</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="positions-tbody">
+          <tr class="empty-row"><td colspan="7">No open positions. Submit orders in the Markets tab!</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ LEADERBOARD VIEW -->
+  <div id="view-leaderboard" class="view">
+    <div class="page-header">
+      <h2>Trader Leaderboard</h2>
+      <p class="page-subtitle">Top probability analysts and quantitative market makers ranked by 30-day realized P&amp;L.</p>
+    </div>
+    <div class="lb-grid" id="lb-grid">
+      <!-- injected by JS -->
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ ACTIVITY VIEW -->
+  <div id="view-activity" class="view">
+    <div class="page-header">
+      <h2>Exchange Tape &amp; Settlement Stream</h2>
+      <p class="page-subtitle">Low-latency event tape streamed directly from the VERIDEX Rust order book.</p>
+    </div>
+    <div class="activity-feed" id="activity-feed">
+      <div class="activity-empty">Live feed connected to VERIDEX engine…</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ AUTH MODAL -->
+  <div class="modal-overlay hidden" id="auth-modal">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div class="modal-logo">⟐ VERIDEX</div>
+      <h2 class="modal-title" id="modal-title">Access Exchange</h2>
+      <div class="modal-tabs">
+        <button class="modal-tab active" id="mtab-login">Sign In</button>
+        <button class="modal-tab" id="mtab-register">Register Account</button>
+      </div>
+      <form class="modal-form" id="auth-form" autocomplete="off">
+        <div id="reg-username-field" class="hidden">
+          <label class="field-label">Institutional Handle</label>
+          <input class="field-input" id="reg-username" type="text" placeholder="e.g. citadel_alpha" />
+        </div>
+        <label class="field-label">Email Address</label>
+        <input class="field-input" id="auth-email" type="email" placeholder="trader@fund.com" />
+        <label class="field-label">Password</label>
+        <input class="field-input" id="auth-password" type="password" placeholder="••••••••••••" />
+        <div class="modal-error hidden" id="modal-error"></div>
+        <button class="btn-primary full-width" type="submit" id="btn-auth-submit">Authenticate</button>
+      </form>
+      <div class="modal-divider">or</div>
+      <button class="btn-social" id="btn-demo">⚡ Enter Instant Demo Trading ($10k Sandbox)</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ TOAST NOTIFICATIONS -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="./js/api.js"></script>
+  <script src="./js/chart.js"></script>
+  <script src="./js/orderbook.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
