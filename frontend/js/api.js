@@ -131,8 +131,16 @@ class VeridexClient {
     }, 4000);
   }
 
-  fallback(endpoint, options) {
-    if (endpoint.startsWith('/markets')) {
+  async fallback(endpoint, options) {
+    if (endpoint.startsWith('/markets') && !endpoint.includes('/orderbook') && !endpoint.includes('/trades')) {
+      if (window.venturesSupabase) {
+        try {
+          const liveMarkets = await window.venturesSupabase.getVeridexMarkets();
+          if (liveMarkets && liveMarkets.length > 0) {
+            return { markets: liveMarkets };
+          }
+        } catch (_) {}
+      }
       return {
         markets: [
           {

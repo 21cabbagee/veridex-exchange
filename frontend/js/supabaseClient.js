@@ -11,8 +11,8 @@ const getEnv = (key, fallback = '') => {
   return fallback;
 };
 
-const SUPABASE_URL = getEnv('VITE_SUPABASE_URL', getEnv('NEXT_PUBLIC_SUPABASE_URL', getEnv('SUPABASE_URL', '')));
-const SUPABASE_ANON_KEY = getEnv('VITE_SUPABASE_ANON_KEY', getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', getEnv('SUPABASE_ANON_KEY', '')));
+const SUPABASE_URL = getEnv('VITE_SUPABASE_URL', getEnv('NEXT_PUBLIC_SUPABASE_URL', getEnv('SUPABASE_URL', 'https://ijlccbwdocrhbvvqushf.supabase.co')));
+const SUPABASE_ANON_KEY = getEnv('VITE_SUPABASE_ANON_KEY', getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', getEnv('SUPABASE_ANON_KEY', 'sb_publishable_crK7qnWSFmcMZ3_kd9Wg7Q_ouoswYca')));
 
 class UniversalVenturesClient {
   constructor() {
@@ -44,11 +44,26 @@ class UniversalVenturesClient {
 
   // ── Ventures Registry ──
   async getVentures(category = null) {
-    if (this.client) {
-      let q = this.client.from('ventures').select('*').order('name');
-      if (category) q = q.eq('category', category);
-      const { data, error } = await q;
-      if (!error && data) return data;
+    try {
+      if (this.client) {
+        let q = this.client.from('ventures').select('*').order('name');
+        if (category) q = q.eq('category', category);
+        const { data, error } = await q;
+        if (!error && data && data.length > 0) return data;
+      }
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        let url = `${SUPABASE_URL}/rest/v1/ventures?select=*&order=name.asc`;
+        if (category) url += `&category=eq.${encodeURIComponent(category)}`;
+        const res = await fetch(url, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (res.ok) return await res.json();
+      }
+    } catch (err) {
+      console.warn('[Supabase] Failed to fetch ventures:', err);
     }
     // Static fallback
     return [
@@ -63,25 +78,59 @@ class UniversalVenturesClient {
 
   // ── Cross-Venture Event Telemetry ──
   async trackEvent(ventureSlug, eventType, payload = {}, userId = null) {
-    if (this.client) {
-      const { error } = await this.client.from('ventures_events').insert({
-        venture_slug: ventureSlug,
-        event_type: eventType,
-        payload,
-        user_id: userId,
-        visibility: 'public'
-      });
-      if (!error) return true;
-    }
+    try {
+      if (this.client) {
+        const { error } = await this.client.from('ventures_events').insert({
+          venture_slug: ventureSlug,
+          event_type: eventType,
+          payload,
+          user_id: userId,
+          visibility: 'public'
+        });
+        if (!error) return true;
+      }
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        await fetch(`${SUPABASE_URL}/rest/v1/ventures_events`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            venture_slug: ventureSlug,
+            event_type: eventType,
+            payload,
+            user_id: userId,
+            visibility: 'public'
+          })
+        });
+        return true;
+      }
+    } catch (_) {}
     console.debug(`[Telemetry: ${ventureSlug}] ${eventType}:`, payload);
     return true;
   }
 
   // ── VERIDEX Domain Helper ──
   async getVeridexMarkets() {
-    if (this.client) {
-      const { data, error } = await this.client.from('veridex_markets').select('*').eq('status', 'ACTIVE');
-      if (!error && data) return data;
+    try {
+      if (this.client) {
+        const { data, error } = await this.client.from('veridex_markets').select('*').eq('status', 'ACTIVE');
+        if (!error && data && data.length > 0) return data;
+      }
+      if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/veridex_markets?select=*&status=eq.ACTIVE`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        if (res.ok) return await res.json();
+      }
+    } catch (err) {
+      console.warn('[Supabase] Failed to fetch live markets:', err);
     }
     return null;
   }
